@@ -11,6 +11,15 @@ builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
 var connectionString = Environment.GetEnvironmentVariable("DATABASE_URL") ?? builder.Configuration.GetConnectionString("DefaultConnection");
+
+// Convert Render's DATABASE_URL format to Npgsql connection string
+if (!string.IsNullOrEmpty(Environment.GetEnvironmentVariable("DATABASE_URL")))
+{
+    var databaseUrl = Environment.GetEnvironmentVariable("DATABASE_URL");
+    var databaseUri = new Uri(databaseUrl!);
+    var userInfo = databaseUri.UserInfo.Split(':');
+    connectionString = $"Host={databaseUri.Host};Port={databaseUri.Port};Database={databaseUri.LocalPath.Substring(1)};Username={userInfo[0]};Password={userInfo[1]};SSL Mode=Require;Trust Server Certificate=true";
+}
 builder.Services.AddSingleton(new Database(connectionString!));
 builder.Services.AddScoped<AttendanceTracker.Features.Auth.Interfaces.IRegisterCommandHandler, AttendanceTracker.Features.Auth.Handlers.RegisterCommandHandler>();
 builder.Services.AddScoped<AttendanceTracker.Features.Auth.Interfaces.ILoginCommandHandler, AttendanceTracker.Features.Auth.Handlers.LoginCommandHandler>();
@@ -52,6 +61,10 @@ app.UseAuthorization();
 
 app.MapControllers();
 
+// Add a simple health check endpoint
+app.MapGet("/", () => "Attendance Tracker API is running!");
+app.MapGet("/health", () => "OK");
+
 // Apply database schema on startup
 using (var scope = app.Services.CreateScope())
 {
@@ -60,12 +73,14 @@ using (var scope = app.Services.CreateScope())
     var setup = new Setup(database);
     try
     {
+        Console.WriteLine("Attempting to connect to database...");
         setup.ApplySchema();
         Console.WriteLine("Database schema applied successfully.");
     }
     catch (Exception ex)
     {
-        Console.WriteLine($"Warning: Could not connect to database: {ex.Message}");
+        Console.WriteLine($"Error: Could not connect to database: {ex.Message}");
+        Console.WriteLine($"Stack trace: {ex.StackTrace}");
         Console.WriteLine("Application will start but database operations will fail.");
     }
 }
