@@ -2,6 +2,6 @@ namespace AttendanceTracker.Features.Work.Interfaces
 {
     public interface ITimeInCommandHandler
     {
-        Task Handle(int employeeId);
+        Task<DateTime> Handle(int employeeId);
     }
 }

@@ -25,8 +25,16 @@ namespace AttendanceTracker.Features.Auth.Handlers
             using var connection = _database.CreateConnection();
             var employee = await connection.QuerySingleOrDefaultAsync<Employee>("SELECT * FROM Employees WHERE Email = @Email", new { request.Email });
 
-            if (employee == null || !BCrypt.Net.BCrypt.Verify(request.Password, employee.PasswordHash))
+            if (employee == null)
             {
+                Console.WriteLine($"Login failed: User not found for email {request.Email}");
+                return null;
+            }
+
+            var isPasswordValid = BCrypt.Net.BCrypt.Verify(request.Password, employee.PasswordHash);
+            if (!isPasswordValid)
+            {
+                Console.WriteLine($"Login failed: Invalid password for email {request.Email}");
                 return null;
             }
 

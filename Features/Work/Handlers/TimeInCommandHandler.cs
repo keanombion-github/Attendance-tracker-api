@@ -13,12 +13,14 @@ namespace AttendanceTracker.Features.Work.Handlers
             _database = database;
         }
 
-        public async Task Handle(int employeeId)
+        public async Task<DateTime> Handle(int employeeId)
         {
             using var connection = _database.CreateConnection();
+            var timeIn = DateTime.UtcNow;
             await connection.ExecuteAsync(
                 "INSERT INTO TimeRecords (EmployeeId, TimeIn) VALUES (@EmployeeId, @TimeIn)",
-                new { EmployeeId = employeeId, TimeIn = DateTime.UtcNow });
+                new { EmployeeId = employeeId, TimeIn = timeIn });
+            return timeIn;
         }
     }
 }

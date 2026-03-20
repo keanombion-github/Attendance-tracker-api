@@ -21,8 +21,8 @@ namespace AttendanceTracker.Features.Work
         public async Task<IActionResult> TimeOut()
         {
             var employeeId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
-            await _handler.Handle(employeeId);
-            return Ok(new { Message = "Clocked out successfully", Timestamp = DateTime.UtcNow });
+            var timeOut = await _handler.Handle(employeeId);
+            return Ok(new { Message = "Clocked out successfully", TimeOut = timeOut });
         }
     }
 }

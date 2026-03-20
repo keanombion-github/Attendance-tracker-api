@@ -21,8 +21,8 @@ namespace AttendanceTracker.Features.Work
         public async Task<IActionResult> TimeIn()
         {
             var employeeId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
-            await _handler.Handle(employeeId);
-            return Ok(new { Message = "Clocked in successfully", Timestamp = DateTime.UtcNow });
+            var timeIn = await _handler.Handle(employeeId);
+            return Ok(new { Message = "Clocked in successfully", TimeIn = timeIn });
         }
     }
 }
